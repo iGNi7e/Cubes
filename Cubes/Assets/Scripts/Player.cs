@@ -4,19 +4,21 @@ using UnityEngine;
 
 [RequireComponent(typeof(PlayerController))]
 [RequireComponent(typeof(GunController))]
-public class Player : MonoBehaviour {
+public class Player : LivingEntity {
 
     public float moveSpeed = 5f; //скорость плеера
 
     Camera viewCamera; //экземпляр камеры
     PlayerController controller; //экземпляр контроллера
-    public VirtualJoystick virtualJoystick; //экземпляр скрипта управления для телефона
+    public VirtualJoystickLeft virtualJoystick; //экземпляр скрипта управления для телефона
+    public VirtualJoystickRight virtualJoystickRight; //экземпляр скрипта поворота персонажа для телефона
     GunController gunController; //экземпляр GunController
 
-    void Start () {
+    protected override void Start () {
+        base.Start();
         controller = GetComponent<PlayerController>();
-        viewCamera = Camera.main;
         gunController = GetComponent<GunController>();
+        viewCamera = Camera.main;
     }
 	
 	void Update () {
@@ -26,12 +28,17 @@ public class Player : MonoBehaviour {
         Vector3 moveVelocity = moveInput.normalized * moveSpeed; //преобразование в конечный вектор движения плеера
         controller.Move(moveVelocity);
 
+        Vector3 rotateInput = new Vector3(virtualJoystickRight.Horizontal() + transform.position.x,0,virtualJoystickRight.Vertical() + transform.position.z); //принимаем параметры для определения направления поворота
+        controller.LookAt(rotateInput);
+
+        #region Mouse Inpit (Закомментировать для билда под телефон)
+
         //Определение направления поворота плеера в нужную сторону
         Ray ray = viewCamera.ScreenPointToRay(Input.mousePosition);
         Plane groundPlane = new Plane(Vector3.up,Vector3.zero);
         float rayDistance;
 
-        if(groundPlane.Raycast(ray,out rayDistance))
+        if (groundPlane.Raycast(ray,out rayDistance))
         {
             Vector3 point = ray.GetPoint(rayDistance);
             controller.LookAt(point);
@@ -42,5 +49,6 @@ public class Player : MonoBehaviour {
         {
             gunController.Shoot();
         }
-	}
+        #endregion
+    }
 }
