@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Spawner : MonoBehaviour {
 
@@ -9,7 +10,7 @@ public class Spawner : MonoBehaviour {
 
     Wave currentWave; //текущая волна
     int currentWaveNumber; //номер текущей волны
-
+    
     int enemyRemainingToSpawn; //количество enemy для спавна
     int enemyRemainingAlive; //количество enemy живых
     float nextSpawnTime; //время между спавном префаба
