@@ -6,13 +6,18 @@ public class MapGenerator : MonoBehaviour {
 
     public Transform tilePrefab; //префаб тайлов
     public Transform obstaclePrefab; //префаб стен
+    public Transform navmeshFloor;//navmesh
+    public Transform navmeshMaskPrefab;//ограничение navmesh по краям карты
     public Vector2 mapSize; //размер карты
+    public Vector2 maxMapSize;
 
     [Range(0,1)]
     public float outlinePercent; //размер расстояния между тайлами
 
     [Range(0,1)]
     public float obstaclePercent;
+
+    public float tileSize;
 
     List<Coord> allTileCoords; //координаты всех тайлов
     Queue<Coord> shuffledTileCoords; //перетасованные координаты
@@ -53,7 +58,7 @@ public class MapGenerator : MonoBehaviour {
             {
                 Vector3 tilePosition = CoordToPosition(x,y); //определение координат тайлов
                 Transform newTile = Instantiate(tilePrefab,tilePosition,Quaternion.Euler(Vector3.right * 90)) as Transform; //создание тайлов
-                newTile.localScale = Vector3.one * (1 - outlinePercent);
+                newTile.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                 newTile.parent = mapHolder;
             }
         }
@@ -73,6 +78,7 @@ public class MapGenerator : MonoBehaviour {
 
                 Transform newObstacle = Instantiate(obstaclePrefab,obstaclePosition + Vector3.up * 0.5f,Quaternion.identity) as Transform;
                 newObstacle.parent = mapHolder;
+                newObstacle.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
             }
             else
             {
@@ -80,6 +86,29 @@ public class MapGenerator : MonoBehaviour {
                 currentObstacleCount--;
             }
         }
+
+     #region Создание navmesh
+        //создание по краям navmesh obstacle
+        Transform maskleft = Instantiate(navmeshMaskPrefab,Vector3.left * (mapSize.x + maxMapSize.x) / 4 * tileSize,Quaternion.identity) as Transform;
+        maskleft.parent = mapHolder;
+        maskleft.localScale = new Vector3((maxMapSize.x - mapSize.x) / 2,1,mapSize.y) * tileSize;
+
+        Transform maskRight = Instantiate(navmeshMaskPrefab,Vector3.right * (mapSize.x + maxMapSize.x) / 4f * tileSize,Quaternion.identity) as Transform;
+        maskRight.parent = mapHolder;
+        maskRight.localScale = new Vector3((maxMapSize.x - mapSize.x) / 2f,1,mapSize.y) * tileSize;
+
+        Transform maskTop = Instantiate(navmeshMaskPrefab,Vector3.forward * (mapSize.y + maxMapSize.y) / 4f * tileSize,Quaternion.identity) as Transform;
+        maskTop.parent = mapHolder;
+        maskTop.localScale = new Vector3(maxMapSize.x,1,(maxMapSize.y - mapSize.y) / 2f) * tileSize;
+
+        Transform maskBot = Instantiate(navmeshMaskPrefab,Vector3.back * (mapSize.y + maxMapSize.y) / 4f * tileSize,Quaternion.identity) as Transform;
+        maskBot.parent = mapHolder;
+        maskBot.localScale = new Vector3(maxMapSize.x,1,(maxMapSize.y - mapSize.y) / 2f) * tileSize;
+
+
+        navmeshFloor.localScale = new Vector3(maxMapSize.x,maxMapSize.y) * tileSize; //вычисление размера navmesh
+#endregion
+
     }
 
     bool MapIsFullAccessible(bool[,] obstacleMap, int currentObstacleCount) //определение возможности поставки препятствия на карте, алгоритм заливки Flood fild
@@ -123,7 +152,7 @@ public class MapGenerator : MonoBehaviour {
 
     Vector3 CoordToPosition(int x, int y)
     {
-        return new Vector3(-mapSize.x / 2 + 0.5f + x,0,-mapSize.y / 2 + 0.5f + y); 
+        return new Vector3(-mapSize.x / 2 + 0.5f + x,0,-mapSize.y / 2 + 0.5f + y) * tileSize; 
     }
 
     //Выборка координат первого в очереди элемента
