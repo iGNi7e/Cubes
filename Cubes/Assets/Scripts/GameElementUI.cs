@@ -27,8 +27,8 @@ public class GameElementUI : MonoBehaviour {
         spawner.waves[0].timeBetweenSpawn = timeBetweenSpawnSlider.value;
         timeBetweenSpawnText.text = "Time between spawn enemies: " + spawner.waves[0].timeBetweenSpawn + " sec";
 
-        mapGenerator.obstaclePercent = obstaclePercentSlider.value;
-        obstaclePercentText.text = "Obstacle Percent: " + mapGenerator.obstaclePercent;
+        mapGenerator.maps[mapGenerator.mapIndex].obstaclePercent = obstaclePercentSlider.value;
+        obstaclePercentText.text = "Obstacle Percent: " + mapGenerator.maps[mapGenerator.mapIndex].obstaclePercent;
         mapGenerator.GenerateMap();
     }
 

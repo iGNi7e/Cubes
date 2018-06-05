@@ -1,18 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(MapGenerator))]
-public class MapEditor : Editor {
+public class MapEditor : Editor
+{
 
     public override void OnInspectorGUI()
     {
-        base.OnInspectorGUI();
+        //base.OnInspectorGUI();
 
         MapGenerator map = target as MapGenerator;
+        if (DrawDefaultInspector()){
+            map.GenerateMap();
+        }
 
-        map.GenerateMap();
+        if(GUILayout.Button("Generate Map")){
+            map.GenerateMap();
+        }
     }
 
 }
