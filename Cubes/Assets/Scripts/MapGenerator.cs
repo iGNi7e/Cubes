@@ -20,6 +20,8 @@ public class MapGenerator : MonoBehaviour {
 
     List<Coord> allTileCoords; //координаты всех тайлов
     Queue<Coord> shuffledTileCoords; //перетасованные координаты
+    Queue<Coord> shuffledOpenTileCoords; //открытые координаты
+    Transform[,] tileMap;
 
     Map currentMap;
 
@@ -31,6 +33,7 @@ public class MapGenerator : MonoBehaviour {
     public void GenerateMap()
     {
         currentMap = maps[mapIndex];
+        tileMap = new Transform[currentMap.mapSize.x,currentMap.mapSize.y];
         System.Random prng = new System.Random(currentMap.seed);
         GetComponent<BoxCollider>().size = new Vector3(currentMap.mapSize.x * tileSize,0.05f,currentMap.mapSize.y * tileSize);
 
@@ -64,6 +67,7 @@ public class MapGenerator : MonoBehaviour {
                 Transform newTile = Instantiate(tilePrefab,tilePosition,Quaternion.Euler(Vector3.right * 90)) as Transform; //создание тайлов
                 newTile.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                 newTile.parent = mapHolder;
+                tileMap[x,y] = newTile;
             }
         }
         #endregion
@@ -73,6 +77,8 @@ public class MapGenerator : MonoBehaviour {
 
         int obstacleCount = (int)(currentMap.mapSize.x * currentMap.mapSize.y * currentMap.obstaclePercent);
         int currentObstacleCount = 0;
+        List<Coord> allOpenCoords = new List<Coord>(allTileCoords);
+
         for (int i = 0; i < obstacleCount; i++) //создание стен
         {
             Coord randomCoord = GetRandomCoord();
@@ -94,7 +100,7 @@ public class MapGenerator : MonoBehaviour {
                 obstacleMaterial.color = Color.Lerp(currentMap.foregroundColour,currentMap.backgroundColour,colourPercent);
                 obstacleRenderer.sharedMaterial = obstacleMaterial;
 
-                //allOpenCoords.Remove(randomCoord);
+                allOpenCoords.Remove(randomCoord);
             }
             else
             {
@@ -102,9 +108,12 @@ public class MapGenerator : MonoBehaviour {
                 currentObstacleCount--;
             }
         }
-#endregion
 
-#region Создание navmesh
+        shuffledOpenTileCoords = new Queue<Coord>(Utility.ShuffleArray(allOpenCoords.ToArray(),currentMap.seed)); //перетасованная очередь
+
+        #endregion
+
+        #region Создание navmesh
         //создание по краям navmesh obstacle
         Transform maskleft = Instantiate(navmeshMaskPrefab,Vector3.left * (currentMap.mapSize.x + currentMap.mapSize.x) / 4f * tileSize,Quaternion.identity) as Transform;
         maskleft.parent = mapHolder;
@@ -172,12 +181,28 @@ public class MapGenerator : MonoBehaviour {
         return new Vector3(-currentMap.mapSize.x / 2 + 0.5f + x,0,-currentMap.mapSize.y / 2 + 0.5f + y) * tileSize; 
     }
 
+    public Transform GetTileFromPosition(Vector3 position)
+    {
+        int x = Mathf.RoundToInt(position.x / tileSize + (currentMap.mapSize.x - 1) / 2f);
+        int y = Mathf.RoundToInt(position.z / tileSize + (currentMap.mapSize.y - 1) / 2f);
+        x = Mathf.Clamp(x,0,tileMap.GetLength(0));
+        y = Mathf.Clamp(y,0,tileMap.GetLength(1));
+        return tileMap[x,y];
+    }
+
     //Выборка координат первого в очереди элемента
     public Coord GetRandomCoord()
     {
         Coord randomCoord = shuffledTileCoords.Dequeue();
         shuffledTileCoords.Enqueue(randomCoord);
         return randomCoord;
+    }
+
+    public Transform GetRandomOpenTile()
+    {
+        Coord randomCoord = shuffledOpenTileCoords.Dequeue();
+        shuffledOpenTileCoords.Enqueue(randomCoord);
+        return tileMap[randomCoord.x,randomCoord.y];
     }
 
     [System.Serializable]
